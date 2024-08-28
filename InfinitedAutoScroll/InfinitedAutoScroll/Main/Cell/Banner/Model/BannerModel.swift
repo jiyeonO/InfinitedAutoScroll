@@ -42,10 +42,10 @@ extension BannerModel {
     
     static var fakes: [Self] = [
         .init(imageName: "art1", mainTitle: "아트 One", subTitle: "첫번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .purple),
-        .init(imageName: "art2", mainTitle: "아트 Two", subTitle: "두번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/refik+anadol_cbr.m3u8", color: .green),
-        .init(imageName: "art3", mainTitle: "아트 Three", subTitle: "세번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .yellow),
-        .init(imageName: "art4", mainTitle: "아트 Four", subTitle: "네번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/refik+anadol_cbr.m3u8", color: .blue),
-        .init(imageName: "art5", mainTitle: "아트 Five", subTitle: "다섯번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .brown)
+        .init(imageName: "art2", mainTitle: "아트 Two", subTitle: "두번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/refik+anadol_cbr.m3u8", color: .green)
+//        .init(imageName: "art3", mainTitle: "아트 Three", subTitle: "세번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .yellow),
+//        .init(imageName: "art4", mainTitle: "아트 Four", subTitle: "네번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/refik+anadol_cbr.m3u8", color: .blue),
+//        .init(imageName: "art5", mainTitle: "아트 Five", subTitle: "다섯번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .brown)
     ]
     
 }

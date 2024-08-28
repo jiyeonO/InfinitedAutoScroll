@@ -11,6 +11,7 @@ import Combine
 struct MainCompositionalLayoutHandler {
     
     private let currentIndexPathSubject: CurrentValueSubject<IndexPath, Never> = .init(Constants.initialIndexPath)
+    private let pageSubject: CurrentValueSubject<Int, Never> = .init(Constants.initialPage)
     
     private let collectionView: UICollectionView
     
@@ -25,6 +26,12 @@ struct MainCompositionalLayoutHandler {
             .eraseToAnyPublisher()
     }
     
+    var pagePublisher: AnyPublisher<Int, Never> {
+        pageSubject
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+
     func createLayout() -> UICollectionViewLayout {
         UICollectionViewCompositionalLayout { section, environment -> NSCollectionLayoutSection? in
             switch section {
@@ -46,6 +53,10 @@ struct MainCompositionalLayoutHandler {
                     if let indexPath = visibleItems.last?.indexPath, indexPath.section == Constants.bannerSection {
                         self.currentIndexPathSubject.send(indexPath)
 //                        print("> indexPath: \(indexPath.item)")
+                    }
+                    
+                    if let currentPage = Int(exactly: offset.x / self.collectionView.bounds.width) {
+                        self.pageSubject.send(currentPage)
                     }
                 }
                 
@@ -91,6 +102,7 @@ private extension MainCompositionalLayoutHandler {
     enum Constants {
         static let bannerSection: Int = MainSection.banner.rawValue
         static let initialIndexPath: IndexPath = .init(item: 0, section: MainSection.banner.rawValue)
+        static let initialPage: Int = 0
         static let infiniteX: Int = 3
         static let bannerHeightDimension: CGFloat = 488.0
     }

@@ -52,6 +52,10 @@ class MainViewController: UIViewController {
         ))
         
         [
+            self.collectionViewLayoutHandler.pagePublisher
+                .sink(receiveValue: { [weak self] index in
+//                    self?.playVideo(in: index)
+                }),
             outputs.currentIndexInfo
                 .sink(receiveValue: { [weak self] indexInfo in
                     self?.scrollToInfinitedItem(info: indexInfo)
@@ -104,6 +108,13 @@ private extension MainViewController {
     func scrollToNextPage(in index: Int) {
         let indexPath = IndexPath(item: index, section: Constants.bannerSection)
         self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+    }
+    
+    func playVideo(in index: Int) {
+        let indexPath = IndexPath(item: index, section: Constants.bannerSection)
+        if let cell = self.collectionView.cellForItem(at: indexPath) as? BannerCollectionViewCell {
+            cell.play()
+        }
     }
     
 }
