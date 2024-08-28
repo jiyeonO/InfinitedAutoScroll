@@ -17,10 +17,17 @@
                 <rect key="frame" x="0.0" y="0.0" width="345" height="359"/>
                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 <subviews>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="dhI-uN-Ws1">
+                        <rect key="frame" x="0.0" y="0.0" width="345" height="359"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="doc.richtext.fill.ja" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="RAK-0b-BYI">
+                        <rect key="frame" x="0.0" y="0.33333333333334281" width="345" height="358.66666666666663"/>
+                    </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TSt-5P-tGw">
                         <rect key="frame" x="20" y="309" width="305" height="30"/>
                         <fontDescription key="fontDescription" type="boldSystem" pointSize="25"/>
-                        <nil key="textColor"/>
+                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
@@ -28,15 +35,28 @@
             <viewLayoutGuide key="safeArea" id="ZTg-uK-7eu"/>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
             <constraints>
+                <constraint firstAttribute="bottom" secondItem="dhI-uN-Ws1" secondAttribute="bottom" id="8A2-WV-gxb"/>
+                <constraint firstItem="RAK-0b-BYI" firstAttribute="top" secondItem="dhI-uN-Ws1" secondAttribute="top" id="Plt-hc-fz1"/>
+                <constraint firstItem="RAK-0b-BYI" firstAttribute="bottom" secondItem="dhI-uN-Ws1" secondAttribute="bottom" id="STR-5n-iSL"/>
+                <constraint firstItem="RAK-0b-BYI" firstAttribute="leading" secondItem="dhI-uN-Ws1" secondAttribute="leading" id="TsJ-nq-2YE"/>
                 <constraint firstAttribute="bottom" secondItem="TSt-5P-tGw" secondAttribute="bottom" constant="20" id="WuA-JN-ZHY"/>
+                <constraint firstItem="dhI-uN-Ws1" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" id="aIM-NT-QFJ"/>
+                <constraint firstAttribute="trailing" secondItem="dhI-uN-Ws1" secondAttribute="trailing" id="cGv-Be-LEh"/>
+                <constraint firstItem="RAK-0b-BYI" firstAttribute="trailing" secondItem="dhI-uN-Ws1" secondAttribute="trailing" id="hvv-0C-Nuu"/>
+                <constraint firstItem="dhI-uN-Ws1" firstAttribute="top" secondItem="gTV-IL-0wX" secondAttribute="top" id="irO-aD-zEm"/>
                 <constraint firstAttribute="trailing" secondItem="TSt-5P-tGw" secondAttribute="trailing" constant="20" id="tqF-tX-NcE"/>
                 <constraint firstItem="TSt-5P-tGw" firstAttribute="leading" secondItem="gTV-IL-0wX" secondAttribute="leading" constant="20" id="vh1-vu-xdQ"/>
             </constraints>
             <size key="customSize" width="345" height="359"/>
             <connections>
+                <outlet property="playerView" destination="dhI-uN-Ws1" id="ppl-08-euk"/>
+                <outlet property="thumbnail" destination="RAK-0b-BYI" id="R8B-z1-3Dr"/>
                 <outlet property="titleLabel" destination="TSt-5P-tGw" id="qI1-dw-uvL"/>
             </connections>
             <point key="canvasLocation" x="17.557251908396946" y="20.774647887323944"/>
         </collectionViewCell>
     </objects>
+    <resources>
+        <image name="doc.richtext.fill.ja" catalog="system" width="115" height="128"/>
+    </resources>
 </document>

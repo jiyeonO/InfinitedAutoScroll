@@ -45,7 +45,7 @@ struct MainCompositionalLayoutHandler {
                 layoutSection.visibleItemsInvalidationHandler = { (visibleItems, offset, env) in
                     if let indexPath = visibleItems.last?.indexPath, indexPath.section == Constants.bannerSection {
                         self.currentIndexPathSubject.send(indexPath)
-                        print("> indexPath: \(indexPath.item)")
+//                        print("> indexPath: \(indexPath.item)")
                     }
                 }
                 
