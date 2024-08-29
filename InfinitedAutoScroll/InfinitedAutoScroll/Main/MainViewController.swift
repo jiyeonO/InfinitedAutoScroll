@@ -39,23 +39,16 @@ class MainViewController: UIViewController {
         
         self.viewDidLoadPublisher.send()
     }
-
+    
     func bindViewModel() {
         // Inputs
         let viewDidLoad = self.viewDidLoadPublisher
             .eraseToAnyPublisher()
         
         // Outputs
-        let outputs = self.viewModel.bind(.init(
-            viewDidLoad: viewDidLoad,
-            currentIndexPathTrigger: self.collectionViewLayoutHandler.currentIndexPathPublisher
-        ))
+        let outputs = self.viewModel.bind(.init(viewDidLoad: viewDidLoad))
         
         [
-            outputs.currentIndexInfo
-                .sink(receiveValue: { [weak self] indexInfo in
-                    self?.scrollToInfinitedItem(info: indexInfo)
-                }),
             outputs.items
                 .sink { [weak self] items in
                     self?.applySnapshot(items: items)
@@ -67,43 +60,6 @@ class MainViewController: UIViewController {
         ].forEach {
             self.cancellables.append($0)
         }
-    }
-    
-}
-
-private extension MainViewController {
-    
-    func scrollToInfinitedItem(info: BannerIndexInfo) {
-        let itemsCount = info.itemsCount
-        let index = info.currentIndex
-        
-        let startLastIndex = itemsCount - 1
-        let endSecondIndex = itemsCount * 2 + 1
-        let middleLastIndex = itemsCount * 2 - 1
-        let middleFirstIndex = itemsCount
-        
-        switch index {
-        case startLastIndex:
-            print("## scroll startLastIndex")
-            self.collectionView.scrollToItem(at: [Constants.bannerSection, middleLastIndex], at: .centeredHorizontally, animated: false)
-        case endSecondIndex:
-            print("## scroll endSecondIndex")
-            self.collectionView.scrollToItem(at: [Constants.bannerSection, middleFirstIndex], at: .centeredHorizontally, animated: false)
-            self.isMovedInfinitedScroll = true
-        case middleFirstIndex:
-            print("## scroll middleFirstIndex")
-            if self.isMovedInfinitedScroll {
-                self.isMovedInfinitedScroll = false
-                self.scrollToNextPage(in: index + 1) // 스크롤 이동 후 다음 페이지로 넘김.
-            }
-        default:
-            break
-        }
-    }
-    
-    func scrollToNextPage(in index: Int) {
-        let indexPath = IndexPath(item: index, section: Constants.bannerSection)
-        self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
     }
     
 }

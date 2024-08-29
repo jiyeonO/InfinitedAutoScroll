@@ -10,19 +10,10 @@ import Combine
 
 struct MainCompositionalLayoutHandler {
     
-    private let currentIndexPathSubject: CurrentValueSubject<IndexPath, Never> = .init(Constants.initialIndexPath)
-    
     private let collectionView: UICollectionView
     
     init(collectionView: UICollectionView) {
         self.collectionView = collectionView
-    }
-    
-    var currentIndexPathPublisher: AnyPublisher<IndexPath, Never> {
-        currentIndexPathSubject
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .eraseToAnyPublisher()
     }
     
     func createLayout() -> UICollectionViewLayout {
@@ -39,21 +30,7 @@ struct MainCompositionalLayoutHandler {
                                                        heightDimension: .absolute(Constants.bannerHeightDimension))
                 let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
                 
-                let layoutSection = NSCollectionLayoutSection(group: group)
-                layoutSection.orthogonalScrollingBehavior = .groupPaging
-                
-                layoutSection.visibleItemsInvalidationHandler = { (visibleItems, offset, env) in
-                    if let indexPath = visibleItems.last?.indexPath, indexPath.section == Constants.bannerSection {
-                        self.currentIndexPathSubject.send(indexPath)
-                        print("> indexPath: \(indexPath.item)")
-                    }
-                }
-                
-                DispatchQueue.main.async {
-                    self.scrollToInitialPosition(in: Constants.bannerSection)
-                }
-                
-                return layoutSection
+                return NSCollectionLayoutSection(group: group)
             case MainSection.product.rawValue:
                 // item
                 let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
@@ -74,24 +51,10 @@ struct MainCompositionalLayoutHandler {
     
 }
 
-private extension MainCompositionalLayoutHandler {
-    
-    func scrollToInitialPosition(in section: Int) {
-        let itemsCount = self.collectionView.numberOfItems(inSection: Constants.bannerSection) / Constants.infiniteX
-        let initialIndexPath = IndexPath(item: itemsCount, section: Constants.bannerSection)
-        self.collectionView.scrollToItem(at: initialIndexPath, at: .centeredHorizontally, animated: false)
-    }
-    
-}
-
-
 // MARK: - Constants
 private extension MainCompositionalLayoutHandler {
     
     enum Constants {
-        static let bannerSection: Int = MainSection.banner.rawValue
-        static let initialIndexPath: IndexPath = .init(item: 0, section: MainSection.banner.rawValue)
-        static let infiniteX: Int = 3
         static let bannerHeightDimension: CGFloat = 488.0
     }
     

@@ -16,7 +16,7 @@ enum MainSection: Int, CaseIterable {
 
 enum MainItem {
     
-    case banner(BannerModel)
+    case banner(BannerCollectionCellViewModel)
     case product(ProductModel)
     
 }
