@@ -7,7 +7,7 @@
 
 import UIKit
 
-final class MainDiffableDataSource: UICollectionViewDiffableDataSource<MainSection, MainItem> {
+final class MainDiffableDataSource: UICollectionViewDiffableDataSource<Int, MainItem> {
     
     init(collectionView: UICollectionView) {
         super.init(collectionView: collectionView) { collectionView, indexPath, item in

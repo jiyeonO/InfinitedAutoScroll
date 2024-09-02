@@ -21,17 +21,15 @@ class MainViewController: UIViewController {
             self.collectionView.register(.init(nibName: "ProductCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "ProductCollectionViewCell")
             
             self.collectionView.dataSource = self.dataSource
-            
-            self.collectionView.collectionViewLayout = self.collectionViewLayoutHandler.createLayout()
+            self.collectionView.delegate = self
         }
     }
     
     private lazy var dataSource = MainDiffableDataSource(collectionView: self.collectionView)
     
-    private lazy var collectionViewLayoutHandler = MainCompositionalLayoutHandler(collectionView: self.collectionView)
-    
     // MARK: - Action
     private var isMovedInfinitedScroll: Bool = false
+    private var originBannerItemsCount: Int = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,14 +45,13 @@ class MainViewController: UIViewController {
         
         // Outputs
         let outputs = self.viewModel.bind(.init(
-            viewDidLoad: viewDidLoad,
-            currentIndexPathTrigger: self.collectionViewLayoutHandler.currentIndexPathPublisher
+            viewDidLoad: viewDidLoad
         ))
         
         [
-            outputs.currentIndexInfo
-                .sink(receiveValue: { [weak self] indexInfo in
-                    self?.scrollToInfinitedItem(info: indexInfo)
+            outputs.bannerOriginItemsCount
+                .sink(receiveValue: { [weak self] count in
+                    self?.originBannerItemsCount = count
                 }),
             outputs.items
                 .sink { [weak self] items in
@@ -67,6 +64,39 @@ class MainViewController: UIViewController {
         ].forEach {
             self.cancellables.append($0)
         }
+    }
+    
+}
+
+extension MainViewController: UICollectionViewDelegate {
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if scrollView.contentOffset.x <= 0 { // 첫번째(4)가 보이면 4번째 index의 4로 이동시키기
+            scrollView.setContentOffset(.init(x: Constants.cellWidth * CGFloat(originBannerItemsCount), y: scrollView.contentOffset.y), animated: false)
+        } else if scrollView.contentOffset.x >= Constants.cellWidth * CGFloat(originBannerItemsCount+1) { //마지막 1이 보이면 1번째 index의 1로 이동
+            scrollView.setContentOffset(.init(x: Constants.cellWidth, y: scrollView.contentOffset.y), animated: false)
+        }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+//        if scrollView.contentOffset.x == 0 { // 첫번째(4)가 보이면 4번째 index의 4로 이동시키기
+//            scrollView.setContentOffset(.init(x: Constants.cellWidth * CGFloat(originBannerItemsCount), y: scrollView.contentOffset.y), animated: false)
+//        } else if scrollView.contentOffset.x == Constants.cellWidth * CGFloat(originBannerItemsCount+1) { //마지막 1이 보이면 1번째 index의 1로 이동
+//            scrollView.setContentOffset(.init(x: Constants.cellWidth, y: scrollView.contentOffset.y), animated: false)
+//        }
+//        if scrollView.contentOffset.x == Constants.cellWidth * CGFloat(originBannerItemsCount-1) { // 첫번째(4)가 보이면 4번째 index의 4로 이동시키기
+//            scrollView.setContentOffset(.init(x: Constants.cellWidth * CGFloat(2 * originBannerItemsCount-1), y: scrollView.contentOffset.y), animated: false)
+//        } else if scrollView.contentOffset.x == Constants.cellWidth * CGFloat(2 * originBannerItemsCount) { //마지막 1이 보이면 1번째 index의 1로 이동
+//            scrollView.setContentOffset(.init(x: Constants.cellWidth * CGFloat(originBannerItemsCount), y: scrollView.contentOffset.y), animated: false)
+//        }
+    }
+    
+}
+
+extension MainViewController: UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        CGSize(width: UIScreen.main.bounds.width, height: 488.0)
     }
     
 }
@@ -111,14 +141,30 @@ private extension MainViewController {
 private extension MainViewController {
     
     func applySnapshot(items: [MainDataItem]) {
-        var snapshot = NSDiffableDataSourceSnapshot<MainSection, MainItem>()
-        snapshot.appendSections(MainSection.allCases)
+        var snapshot = NSDiffableDataSourceSnapshot<Int, MainItem>()
+//        snapshot.appendSections(MainSection.allCases)
+//        
+//        items.forEach { data in
+//            snapshot.appendItems(data.items, toSection: data.section)
+//        }
         
+//        self.dataSource.apply(snapshot, animatingDifferences: true)
+        
+        snapshot.appendSections([0])
         items.forEach { data in
-            snapshot.appendItems(data.items, toSection: data.section)
+            snapshot.appendItems(data.items, toSection: 0)
         }
         
-        self.dataSource.apply(snapshot, animatingDifferences: true)
+        self.dataSource.apply(snapshot, animatingDifferences: true) { [weak self] in
+//            self?.collectionView.setContentOffset(.init(x: Constants.cellWidth, y: self?.collectionView.contentOffset.y), animated: false)
+            self?.collectionView.scrollToItem(at: [Constants.bannerSection, 1],
+                                              at: .centeredHorizontally,
+                                              animated: false)
+//            guard let itemsCount = self?.originBannerItemsCount else { return }
+//            self?.collectionView.scrollToItem(at: [Constants.bannerSection, itemsCount],
+//                                              at: .centeredHorizontally,
+//                                              animated: false)
+        }
     }
     
 }
@@ -127,6 +173,7 @@ private extension MainViewController {
     
     enum Constants {
         static let bannerSection: Int = MainSection.banner.rawValue
+        static let cellWidth: CGFloat = UIScreen.main.bounds.width
     }
     
 }
