@@ -22,7 +22,7 @@ final class BannerCollectionViewCell: UICollectionViewCell {
             
             self.setupPlayerLayer()
             
-            player.addObserver(self, forKeyPath: Constants.playerTimeControlKey, options: [.new, .initial], context: nil)
+            player.addObserver(self, forKeyPath: Constants.playerTimeControlKey, options: [.new], context: nil)
         }
     }
     
@@ -37,9 +37,9 @@ final class BannerCollectionViewCell: UICollectionViewCell {
         super.init(frame: frame)
         
         [
-            playerView,
-            thumbnail,
-            titleLabel
+            self.playerView,
+            self.thumbnail,
+            self.titleLabel
         ].forEach {
             self.addSubview($0)
             self.bringSubviewToFront($0)
@@ -47,23 +47,23 @@ final class BannerCollectionViewCell: UICollectionViewCell {
         }
         
         NSLayoutConstraint.activate([
-            playerView.topAnchor.constraint(equalTo: self.topAnchor),
-            playerView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            playerView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-            playerView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+            self.playerView.topAnchor.constraint(equalTo: self.topAnchor),
+            self.playerView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            self.playerView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            self.playerView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
         ])
         
         NSLayoutConstraint.activate([
-            thumbnail.topAnchor.constraint(equalTo: playerView.topAnchor),
-            thumbnail.leadingAnchor.constraint(equalTo: playerView.leadingAnchor),
-            thumbnail.trailingAnchor.constraint(equalTo: playerView.trailingAnchor),
-            thumbnail.bottomAnchor.constraint(equalTo: playerView.bottomAnchor)
+            self.thumbnail.topAnchor.constraint(equalTo: self.playerView.topAnchor),
+            self.thumbnail.leadingAnchor.constraint(equalTo: self.playerView.leadingAnchor),
+            self.thumbnail.trailingAnchor.constraint(equalTo: self.playerView.trailingAnchor),
+            self.thumbnail.bottomAnchor.constraint(equalTo: self.playerView.bottomAnchor)
         ])
         
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -20),
-            titleLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -20)
+            self.titleLabel.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 20),
+            self.titleLabel.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -20),
+            self.titleLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -20)
         ])
     }
     
@@ -82,42 +82,35 @@ final class BannerCollectionViewCell: UICollectionViewCell {
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        self.playerLayer?.frame = self.bounds//self.playerView.bounds
+        self.playerLayer?.frame = self.playerView.bounds
     }
     
     func setupPlayerLayer() {
         let layer = AVPlayerLayer(player: self.player)
         layer.videoGravity = .resizeAspectFill
-        layer.frame = self.bounds//playerView.bounds
+        layer.frame = self.playerView.bounds
         layer.backgroundColor = UIColor.lightGray.cgColor
         
         self.playerLayer = layer
-        
-        self.layoutIfNeeded() // CHECKME: 여기 넣지 않으면 Red 노출 됌.
     }
     
     func set(_ model: BannerModel) {
         self.titleLabel.text = model.mainTitle
         self.tempTitle = model.mainTitle // Log용
         
-        self.thumbnail.backgroundColor = .red
-        self.thumbnail.isHidden = true//false
+        self.thumbnail.backgroundColor = model.color
         
         guard let url = model.url else { return }
         
         let playerItem = AVPlayerItem(url: url)
-        playerItem.preferredForwardBufferDuration = 1.0
-        
+//        playerItem.preferredForwardBufferDuration = 3.0
+//        playerItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+//        
+//        self.player?.automaticallyWaitsToMinimizeStalling = false
         self.player = AVQueuePlayer(playerItem: playerItem)
-        
 //        print("===== set \(self.tempTitle ?? "")")
         
-        self.player?.play()//pause()
-    }
-    
-    func pause() {
         self.player?.pause()
-        self.player = nil
     }
     
     func play() {
@@ -125,14 +118,21 @@ final class BannerCollectionViewCell: UICollectionViewCell {
         self.player?.play()
         print("--play \(self.tempTitle ?? "")")
     }
-//
+
     func reset() {
-//        print(">>>>> Reset \(self.tempTitle ?? "") <<<<<< ")
+        print(">>>>> Reset \(self.tempTitle ?? "") <<<<<< ")
+        self.player?.removeObserver(self, forKeyPath: Constants.playerTimeControlKey, context: nil)
         
-        self.player?.removeObserver(self, forKeyPath: Constants.playerTimeControlKey)
         self.player = nil
         self.tempTitle = nil
         self.playerLooper = nil
+        
+        self.thumbnail.isHidden = false
+    }
+    
+    func pause() {
+        self.player?.pause()
+        self.thumbnail.isHidden = false
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -141,23 +141,19 @@ final class BannerCollectionViewCell: UICollectionViewCell {
                 let status = AVPlayer.TimeControlStatus(rawValue: statusNumber.intValue)!
                 switch status {
                 case .playing:
-                    print("Player is playing")
-                    self.thumbnail.isHidden = true
-                    break
-                case .paused:
-                    //                    print("Player is paused")
-                    break
-                case .waitingToPlayAtSpecifiedRate:
-                    //                    print("Player is waiting to play at specified rate")
-                    break
-                @unknown default:
-                    //                    print("Player status is unknown")
+                    print("Player is playing \(String(describing: tempTitle))")
+                    
+                    if player?.currentItem?.isPlaybackLikelyToKeepUp ?? false {
+                        print("isPlaybackLikelyToKeepUp")
+                        self.thumbnail.isHidden = true
+                    }
+                default:
                     break
                 }
             }
         }
     }
-    
+   
 }
 
 private extension BannerCollectionViewCell {
@@ -167,29 +163,3 @@ private extension BannerCollectionViewCell {
     }
     
 }
-
-
-//class BannerCollectionViewCell: UICollectionViewCell {
-//
-//    @IBOutlet weak var titleLabel: UILabel!
-//    
-//    override func awakeFromNib() {
-//        super.awakeFromNib()
-//    }
-//    
-//    override func prepareForReuse() {
-//        super.prepareForReuse()
-//        
-//        self.reset()
-//    }
-//
-//    func set(_ model: BannerModel) {
-//        self.titleLabel.text = model.mainTitle
-//        self.backgroundColor = model.color
-//    }
-//    
-//    func reset() {
-//        //
-//    }
-//
-//}
