@@ -11,9 +11,12 @@ final class BannerCollectionViewCell: UICollectionViewCell {
     
     private lazy var titleLabel: UILabel = {
        let label = UILabel()
-        label.font = .systemFont(ofSize: 20, weight: .bold)
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 30, weight: .bold)
         return label
     }()
+    
+    private lazy var imageView = UIImageView()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -33,7 +36,7 @@ final class BannerCollectionViewCell: UICollectionViewCell {
     
     func set(_ model: BannerModel) {
         self.titleLabel.text = model.mainTitle
-        self.backgroundColor = model.color
+        self.imageView.image = UIImage(named: model.imageName)
     }
     
     func reset() {
@@ -46,12 +49,19 @@ private extension BannerCollectionViewCell {
     
     func setupViews() {
         [
+            self.imageView,
             self.titleLabel
         ].forEach {
             self.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
         }
         
-        self.titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            self.imageView.topAnchor.constraint(equalTo: self.topAnchor),
+            self.imageView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            self.imageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            self.imageView.bottomAnchor.constraint(equalTo: self.bottomAnchor)
+        ])
         
         NSLayoutConstraint.activate([
             self.titleLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -Constants.InsetConstraint),

@@ -64,7 +64,7 @@ class MainViewController: UIViewController {
 private extension MainViewController {
     
     func setupViews() {
-        self.collectionView.register(BannerCollectionViewCell.self, forCellWithReuseIdentifier: "BannerCollectionViewCell")
+        self.collectionView.register(BannerCollectionViewCell.self, forCellWithReuseIdentifier: Constants.BannerCell)
         self.collectionView.setItemSize(CGSize(width: Constants.cellWidth, height: Constants.cellHeight))
         
         [
@@ -72,9 +72,8 @@ private extension MainViewController {
             self.pageControl
         ].forEach {
             self.view.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
         }
-        
-        self.collectionView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             self.collectionView.topAnchor.constraint(equalTo: self.view.topAnchor),
@@ -82,8 +81,6 @@ private extension MainViewController {
             self.collectionView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
             self.collectionView.heightAnchor.constraint(equalToConstant: Constants.cellHeight)
         ])
-        
-        self.pageControl.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             self.pageControl.bottomAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: -Constants.pageControlBottomConstraint),
@@ -112,6 +109,7 @@ private extension MainViewController {
     
     enum Constants {
         static let bannerSection: Int = 0
+        static let BannerCell: String = "BannerCollectionViewCell"
         static let pageControlBottomConstraint: CGFloat = 20
         static let cellWidth: CGFloat = UIScreen.main.bounds.width
         static let cellHeight: CGFloat = 600.0
