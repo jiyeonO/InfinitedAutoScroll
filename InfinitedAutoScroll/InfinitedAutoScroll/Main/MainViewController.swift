@@ -10,51 +10,41 @@ import Combine
 
 class MainViewController: UIViewController {
 
-    private let viewModel: MainViewModel = MainViewModel()
+    private let viewModel: MainViewModel = MainViewModel(items: BannerModel.fakes, timer: RepeatTimer())
     
     private var cancellables: [AnyCancellable] = []
-    private let viewDidLoadPublisher: PassthroughSubject<Void, Never> = .init()
     
-    @IBOutlet weak var collectionView: UICollectionView! {
-        didSet {
-            self.collectionView.register(.init(nibName: "BannerCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "BannerCollectionViewCell")
-            self.collectionView.register(.init(nibName: "ProductCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "ProductCollectionViewCell")
-            
-            self.collectionView.dataSource = self.dataSource
-            
-            self.collectionView.collectionViewLayout = self.collectionViewLayoutHandler.createLayout()
-        }
-    }
+    // MARK: - UI
+    private lazy var collectionView = CarouselCollectionView(frame: .zero, collectionViewFlowLayout: UICollectionViewFlowLayout())
+    private lazy var pageControl = UIPageControl()
     
     private lazy var dataSource = MainDiffableDataSource(collectionView: self.collectionView)
     
-    private lazy var collectionViewLayoutHandler = MainCompositionalLayoutHandler(collectionView: self.collectionView)
-    
-    // MARK: - Action
-    private var isMovedInfinitedScroll: Bool = false
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.bindViewModel()
         
-        self.viewDidLoadPublisher.send()
+        self.setupViews()
+        self.bindViewModel()
     }
 
     func bindViewModel() {
-        // Inputs
-        let viewDidLoad = self.viewDidLoadPublisher
-            .eraseToAnyPublisher()
-        
         // Outputs
-        let outputs = self.viewModel.bind(.init(
-            viewDidLoad: viewDidLoad,
-            currentIndexPathTrigger: self.collectionViewLayoutHandler.currentIndexPathPublisher
-        ))
+        let outputs = viewModel.bind(.init(currentCarouselIndex: collectionView.currentCarouselIndexPublisher,
+                                           endScrollCarouselIndex: collectionView.pageCarouselIndexPublisher))
         
         [
-            outputs.currentIndexInfo
-                .sink(receiveValue: { [weak self] indexInfo in
-                    self?.scrollToInfinitedItem(info: indexInfo)
+            outputs.originItemsCount
+                .sink { [weak self] count in
+                    self?.collectionView.setup(originItemsCount: count)
+                    self?.pageControl.numberOfPages = count
+                },
+            outputs.pageIndex
+                .sink { [weak self] page in
+                    self?.pageControl.currentPage = page
+                },
+            outputs.nextPage // Done Timer.
+                .sink(receiveValue: { [weak self] _ in
+                    self?.collectionView.scrollToNextPage()
                 }),
             outputs.items
                 .sink { [weak self] items in
@@ -73,52 +63,47 @@ class MainViewController: UIViewController {
 
 private extension MainViewController {
     
-    func scrollToInfinitedItem(info: BannerIndexInfo) {
-        let itemsCount = info.itemsCount
-        let index = info.currentIndex
+    func setupViews() {
+        self.collectionView.register(BannerCollectionViewCell.self, forCellWithReuseIdentifier: "BannerCollectionViewCell")
+        self.collectionView.setItemSize(CGSize(width: Constants.cellWidth, height: Constants.cellHeight))
         
-        let startLastIndex = itemsCount - 1
-        let endSecondIndex = itemsCount * 2 + 1
-        let middleLastIndex = itemsCount * 2 - 1
-        let middleFirstIndex = itemsCount
-        
-        switch index {
-        case startLastIndex:
-            print("## scroll startLastIndex")
-            self.collectionView.scrollToItem(at: [Constants.bannerSection, middleLastIndex], at: .centeredHorizontally, animated: false)
-        case endSecondIndex:
-            print("## scroll endSecondIndex")
-            self.collectionView.scrollToItem(at: [Constants.bannerSection, middleFirstIndex], at: .centeredHorizontally, animated: false)
-            self.isMovedInfinitedScroll = true
-        case middleFirstIndex:
-            print("## scroll middleFirstIndex")
-            if self.isMovedInfinitedScroll {
-                self.isMovedInfinitedScroll = false
-                self.scrollToNextPage(in: index + 1) // 스크롤 이동 후 다음 페이지로 넘김.
-            }
-        default:
-            break
+        [
+            self.collectionView,
+            self.pageControl
+        ].forEach {
+            self.view.addSubview($0)
         }
-    }
-    
-    func scrollToNextPage(in index: Int) {
-        let indexPath = IndexPath(item: index, section: Constants.bannerSection)
-        self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+        
+        self.collectionView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            self.collectionView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            self.collectionView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+            self.collectionView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
+            self.collectionView.heightAnchor.constraint(equalToConstant: Constants.cellHeight)
+        ])
+        
+        self.pageControl.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            self.pageControl.bottomAnchor.constraint(equalTo: self.collectionView.bottomAnchor, constant: -Constants.pageControlBottomConstraint),
+            self.pageControl.leadingAnchor.constraint(equalTo: self.collectionView.leadingAnchor),
+            self.pageControl.trailingAnchor.constraint(equalTo: self.collectionView.trailingAnchor),
+        ])
     }
     
 }
 
 private extension MainViewController {
     
-    func applySnapshot(items: [MainDataItem]) {
-        var snapshot = NSDiffableDataSourceSnapshot<MainSection, MainItem>()
-        snapshot.appendSections(MainSection.allCases)
+    func applySnapshot(items: [BannerModel]) {
+        var snapshot = NSDiffableDataSourceSnapshot<Int, BannerModel>()
+        snapshot.appendSections([Constants.bannerSection])
+        snapshot.appendItems(items, toSection: Constants.bannerSection)
         
-        items.forEach { data in
-            snapshot.appendItems(data.items, toSection: data.section)
+        self.dataSource.apply(snapshot, animatingDifferences: true) { [weak self] in
+            self?.collectionView.setupInitDisplay()
         }
-        
-        self.dataSource.apply(snapshot, animatingDifferences: true)
     }
     
 }
@@ -126,7 +111,10 @@ private extension MainViewController {
 private extension MainViewController {
     
     enum Constants {
-        static let bannerSection: Int = MainSection.banner.rawValue
+        static let bannerSection: Int = 0
+        static let pageControlBottomConstraint: CGFloat = 20
+        static let cellWidth: CGFloat = UIScreen.main.bounds.width
+        static let cellHeight: CGFloat = 600.0
     }
     
 }

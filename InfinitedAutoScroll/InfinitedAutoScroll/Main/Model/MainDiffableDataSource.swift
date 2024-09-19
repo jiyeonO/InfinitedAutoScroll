@@ -7,20 +7,13 @@
 
 import UIKit
 
-final class MainDiffableDataSource: UICollectionViewDiffableDataSource<MainSection, MainItem> {
+final class MainDiffableDataSource: UICollectionViewDiffableDataSource<Int, BannerModel> {
     
     init(collectionView: UICollectionView) {
         super.init(collectionView: collectionView) { collectionView, indexPath, item in
-            switch item {
-            case .banner(let model):
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BannerCollectionViewCell", for: indexPath) as! BannerCollectionViewCell
-                cell.set(model)
-                return cell
-            case .product(let model):
-                let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCollectionViewCell", for: indexPath) as! ProductCollectionViewCell
-                cell.set(model)
-                return cell
-            }
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BannerCollectionViewCell", for: indexPath) as! BannerCollectionViewCell
+            cell.set(item)
+            return cell
         }
     }
     

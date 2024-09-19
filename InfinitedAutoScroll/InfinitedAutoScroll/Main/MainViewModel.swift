@@ -8,23 +8,27 @@
 import Foundation
 import Combine
 
-typealias BannerIndexInfo = (currentIndex: Int, itemsCount: Int)
-
 struct MainViewModel {
     
     struct Inputs {
-        let viewDidLoad: AnyPublisher<Void, Never>
-        let currentIndexPathTrigger: AnyPublisher<IndexPath, Never>
+        let currentCarouselIndex: AnyPublisher<Int, Never>
+        let endScrollCarouselIndex: AnyPublisher<Int, Never>
     }
     
     struct Outputs {
-        let currentIndexInfo: AnyPublisher<BannerIndexInfo, Never>
-        let items: AnyPublisher<[MainDataItem], Never>
+        let originItemsCount: AnyPublisher<Int, Never>
+        let nextPage: AnyPublisher<Void, Never>
+        let pageIndex: AnyPublisher<Int, Never>
+        let items: AnyPublisher<[BannerModel], Never>
         let events: AnyPublisher<Void, Never>
     }
     
-    init() {
-        //
+    private let items: [BannerModel]
+    private let timer: RepeatTimerProtocol
+    
+    init(items: [BannerModel], timer: RepeatTimerProtocol) {
+        self.items = items
+        self.timer = timer
     }
     
 }
@@ -32,69 +36,72 @@ struct MainViewModel {
 extension MainViewModel {
     
     func bind(_ inputs: Inputs) -> Outputs {
+        let items = self.items
         
-        let currentIndexInfoSubject: PassthroughSubject<BannerIndexInfo, Never> = .init()
+        let originItemsSubject: CurrentValueSubject<[BannerModel], Never> = .init(items)
+        let originItemsCountSubject: CurrentValueSubject<Int, Never> = .init(items.count)
         
-        // Fake Data
-        var products: [MainItem] {
-            ProductModel.fakes.map { model -> MainItem in
-               .product(model)
-            }
-        }
+        // Origin Index.
+        let pageIndexSubject: PassthroughSubject<Int, Never> = .init()
         
-        let bannersSubject: CurrentValueSubject<[BannerModel], Never> = .init(BannerModel.fakes)
-        let productsSubject: CurrentValueSubject<[MainItem], Never> = .init(products)
+        // Carousel Items.
+        let itemsSubject: PassthroughSubject<[BannerModel], Never> = .init()
         
-        // Sections
-        let bannerDataSubject: PassthroughSubject<[MainDataItem], Never> = .init()
-        let productDataSubject: PassthroughSubject<[MainDataItem], Never> = .init()
-
-        let allItems = Publishers.CombineLatest(bannerDataSubject, productDataSubject)
-            .map { $0 + $1 }
+        // Done Timer Action.
+        let nextPageTriggerSubject: PassthroughSubject<Void, Never> = .init()
         
         // Events
         let events = Publishers.MergeMany(
-            inputs.currentIndexPathTrigger
-                .withLatestFrom(bannersSubject) { ($0, $1.count) }
-                .handleEvents(receiveOutput: { indexPath, itemsCount in
-                    if itemsCount > 1 {
-                        currentIndexInfoSubject.send((indexPath.item, itemsCount))
-                    }
+            originItemsCountSubject
+                .filter { $0 > 1 }
+                .handleEvents(receiveOutput: { _ in
+                    self.startTimer() // For AutoScroll.
                 })
                 .map {
                     _ in
                 }
                 .eraseToAnyPublisher(),
-            bannersSubject
-                .map { banners -> [MainDataItem] in
-                    let canInfinited = banners.count > 1
-                    
-                    let infinitedFrontItems = banners.map { $0.infinitedModel }
-                    let infinitedBackItems = banners.map { $0.infinitedModel }
-                    let allItems = canInfinited ? infinitedFrontItems + banners + infinitedBackItems : banners
-                    
-                    // temp
-                    let banners = allItems.map { model -> MainItem in
-                            .banner(model)
-                    }
-                    
-                    return [.init(section: .banner, items: banners)]
-                }
-                .handleEvents(receiveOutput: {
-                    bannerDataSubject.send($0)
+            inputs.currentCarouselIndex // 사용자 스크롤 발생시 Timer 재설정
+                .handleEvents(receiveOutput: { page in
+                    self.startTimer()
                 })
-                .map { // TODO: mapToVoid
+                .map {
                     _ in
                 }
                 .eraseToAnyPublisher(),
-            productsSubject
-                .map { model -> [MainDataItem] in
-                    [.init(section: .product, items: products)]
+            inputs.endScrollCarouselIndex
+                .map { $0 - 1 } // For Page Index
+                .handleEvents(receiveOutput: {
+                    pageIndexSubject.send($0)
+                })
+                .map {
+                    _ in
+                }
+                .eraseToAnyPublisher(),
+            originItemsSubject
+                .map { banners -> [BannerModel] in
+                    let canInfinited = banners.count > 1
+                    var infinitedItems = banners
+                    
+                    if canInfinited, let first = items.first, let last = items.last {
+                        infinitedItems.insert(last.infinitedModel, at: 0)
+                        infinitedItems.append(first.infinitedModel)
+                    }
+                    
+                    return infinitedItems
                 }
                 .handleEvents(receiveOutput: {
-                    productDataSubject.send($0)
+                    itemsSubject.send($0)
                 })
-                .map { // TODO: mapToVoid
+                .map {
+                    _ in
+                }
+                .eraseToAnyPublisher(),
+            timer.timerPublisher
+                .handleEvents(receiveOutput: { _ in
+                    nextPageTriggerSubject.send()
+                })
+                .map {
                     _ in
                 }
                 .eraseToAnyPublisher()
@@ -102,10 +109,24 @@ extension MainViewModel {
         
         // Outputs
         return .init(
-            currentIndexInfo: currentIndexInfoSubject.eraseToAnyPublisher(),
-            items: allItems.eraseToAnyPublisher(),
+            originItemsCount: originItemsCountSubject.eraseToAnyPublisher(),
+            nextPage: nextPageTriggerSubject.eraseToAnyPublisher(),
+            pageIndex: pageIndexSubject.eraseToAnyPublisher(),
+            items: itemsSubject.eraseToAnyPublisher(),
             events: events.eraseToAnyPublisher()
         )
+    }
+    
+}
+
+private extension MainViewModel {
+    
+    func startTimer() {
+        self.timer.start()
+    }
+    
+    func stopTimer() {
+        self.timer.stop()
     }
     
 }

@@ -41,11 +41,10 @@ extension BannerModel {
 extension BannerModel {
     
     static var fakes: [Self] = [
-        .init(imageName: "art1", mainTitle: "아트 One", subTitle: "첫번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .purple),
-        .init(imageName: "art2", mainTitle: "아트 Two", subTitle: "두번째 아트 소개", url: "https://raw.githubusercontent.com/gmlwls96/thumbnail/main/thumbnail1.png", color: .green),
-        .init(imageName: "art3", mainTitle: "아트 Three", subTitle: "세번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .yellow),
-        .init(imageName: "art4", mainTitle: "아트 Four", subTitle: "네번째 아트 소개", url: "https://raw.githubusercontent.com/gmlwls96/thumbnail/main/thumbnail1.png", color: .blue),
-        .init(imageName: "art5", mainTitle: "아트 Five", subTitle: "다섯번째 아트 소개", url: "https://dywhtlvtiow1a.cloudfront.net/outputs/jeju_cbr.m3u8", color: .brown)
+        .init(imageName: "art1", mainTitle: "아트 One", subTitle: "첫번째 아트 소개", url: "https://cdn.pixabay.com/video/2019/02/05/21175-315405446_small.mp4", color: .purple),
+        .init(imageName: "art2", mainTitle: "아트 Two", subTitle: "두번째 아트 소개", url: "https://cdn.pixabay.com/video/2021/04/12/70796-538877060_small.mp4", color: .green),
+        .init(imageName: "art3", mainTitle: "아트 Three", subTitle: "세번째 아트 소개", url: "https://cdn.pixabay.com/video/2023/11/28/191159-889246512_small.mp4", color: .red),
+        .init(imageName: "art4", mainTitle: "아트 Four", subTitle: "네번째 아트 소개", url: "https://cdn.pixabay.com/video/2024/07/27/223461_small.mp4", color: .blue)
     ]
     
 }
